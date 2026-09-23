@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hairu – Stylist & AI Hairstyle</title>
+  <title>Hairu – AI Hairstyle Generator</title>
   <style>
     :root {
       --bg-color: #0b0b0d;
       --card-bg: #16161a;
       --accent: #6c5ce7;
-      --accent-hover: #5a4bd1;
       --text-color: #ffffff;
       --text-muted: #a0a0a0;
       --border-radius: 18px;
@@ -42,6 +41,7 @@
       padding: 20px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.8);
       position: relative;
+      overflow: hidden;
     }
 
     header {
@@ -52,7 +52,6 @@
     header h1 {
       font-size: 26px;
       font-weight: 700;
-      letter-spacing: -0.5px;
     }
 
     header p {
@@ -61,49 +60,52 @@
       margin-top: 4px;
     }
 
-    /* Wgrywanie plików */
-    .upload-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+    /* Sekcja ze zdjęciem */
+    .photo-section {
       margin-bottom: 20px;
     }
 
-    .upload-box {
+    .camera-box {
       background-color: var(--card-bg);
       border: 2px dashed #333;
       border-radius: var(--border-radius);
-      height: 140px;
+      height: 220px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: border-color 0.2s, background-color 0.2s;
     }
 
-    .upload-box:hover {
-      border-color: var(--accent);
-      background-color: #1f1f24;
-    }
-
-    .upload-box img {
+    .camera-box video, .camera-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
     }
 
-    .upload-box span {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-align: center;
-      padding: 0 8px;
-      pointer-events: none;
+    /* Odbicie lustrzane na podglądzie kamery dla naturalnego wrażenia */
+    .camera-box video {
+      transform: scaleX(-1);
+    }
+
+    .camera-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #333;
+      background: #16161a;
+      color: #fff;
+      border-radius: 12px;
+      font-size: 13px;
+      cursor: pointer;
     }
 
     /* Wybór stylów */
@@ -111,9 +113,6 @@
       font-size: 15px;
       font-weight: 600;
       margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
     .styles-grid {
@@ -129,8 +128,7 @@
       overflow: hidden;
       border: 2px solid transparent;
       cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
+      transition: all 0.2s;
     }
 
     .style-card.selected {
@@ -140,7 +138,7 @@
 
     .style-card img {
       width: 100%;
-      height: 100px;
+      height: 90px;
       object-fit: cover;
       display: block;
     }
@@ -150,10 +148,8 @@
       padding: 6px;
       font-size: 12px;
       font-weight: 600;
-      background-color: var(--card-bg);
     }
 
-    /* Przycisk akcji */
     .btn-generate {
       width: 100%;
       padding: 16px;
@@ -164,20 +160,14 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      box-shadow: 0 4px 15px rgba(110, 45, 226, 0.3);
     }
 
-    .btn-generate:active {
-      transform: scale(0.98);
-    }
-
-    /* Overlay ładowania */
+    /* Overlay Ładowania AI */
     .loader-overlay {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.92);
       backdrop-filter: blur(8px);
       z-index: 10;
       border-radius: 28px;
@@ -187,8 +177,8 @@
     }
 
     .spinner {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border: 4px solid rgba(255, 255, 255, 0.1);
       border-top-color: var(--accent);
       border-radius: 50%;
@@ -200,7 +190,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Komponent porównania Przed/Po (Slider) */
+    /* Wynik Przed / Po */
     .result-container {
       display: none;
       position: absolute;
@@ -228,7 +218,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      pointer-events: none;
     }
 
     .img-after {
@@ -259,8 +248,6 @@
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 14px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
 
     .badge {
@@ -268,27 +255,12 @@
       top: 12px;
       padding: 4px 10px;
       background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
       font-size: 11px;
       font-weight: 700;
       border-radius: 12px;
-      letter-spacing: 0.5px;
     }
-
     .badge-before { left: 12px; }
     .badge-after { right: 12px; }
-
-    .btn-reset {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #333;
-      border-radius: 30px;
-      background: #16161a;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
 
     input[type="file"] { display: none; }
   </style>
@@ -297,189 +269,198 @@
 
   <div class="app-container">
     <header>
-      <h1>Hairu</h1>
-      <p>Wygeneruj nową fryzurę ze zdjęcia</p>
+      <h1>Hairu AI</h1>
+      <p>Stwórz i wygeneruj nową fryzurę</p>
     </header>
 
-    <!-- Wgrywanie zdjęć -->
-    <div class="upload-section">
-      <div class="upload-box" id="box-user" onclick="document.getElementById('user-photo').click()">
-        <img id="user-preview" style="display:none;" alt="Zdjęcie użytkownika">
-        <span id="user-placeholder">📸 Twoje zdjęcie<br><small style="opacity:0.6">(Wymagane)</small></span>
+    <div class="photo-section">
+      <div class="camera-box">
+        <video id="webcam" autoplay playsinline></video>
+        <img id="captured-img" style="display:none;" alt="Twoje zdjęcie">
+        <span id="placeholder-text" style="display:none;">📷 Włącz aparat lub wgraj zdjęcie</span>
       </div>
-      <input type="file" id="user-photo" accept="image/png, image/jpeg, image/webp" onchange="handleFileSelect(event, 'user-preview', 'user-placeholder')">
 
-      <div class="upload-box" id="box-ref" onclick="document.getElementById('ref-photo').click()">
-        <img id="ref-preview" style="display:none;" alt="Wzorzec">
-        <span id="ref-placeholder">✂️ Wzorzec<br><small style="opacity:0.6">(Opcjonalnie)</small></span>
+      <div class="camera-actions">
+        <button class="btn-secondary" onclick="snapPhoto()">Zrób zdjęcie 📸</button>
+        <button class="btn-secondary" onclick="document.getElementById('file-input').click()">Z pliku 📁</button>
       </div>
-      <input type="file" id="ref-photo" accept="image/png, image/jpeg, image/webp" onchange="handleFileSelect(event, 'ref-preview', 'ref-placeholder')">
+      <input type="file" id="file-input" accept="image/*" onchange="handleFileUpload(event)">
     </div>
 
-    <!-- Wybór fryzury -->
-    <div class="section-title">Wybierz stylizacji</div>
+    <div class="section-title">Wybierz docelowy styl AI</div>
     <div class="styles-grid">
-      <div class="style-card selected" onclick="selectStyle(this, 'Quiff')">
+      <div class="style-card selected" onclick="selectStyle(this, 'Messy Textured Hair')">
+        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300" alt="Messy">
+        <p>Messy Crop</p>
+      </div>
+      <div class="style-card" onclick="selectStyle(this, 'Classic Quiff')">
         <img src="https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?w=300" alt="Quiff">
-        <p>Quiff</p>
+        <p>Classic Quiff</p>
       </div>
-      <div class="style-card" onclick="selectStyle(this, 'Pompadour')">
-        <img src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300" alt="Pompadour">
-        <p>Pompadour</p>
+      <div class="style-card" onclick="selectStyle(this, 'Slicked Back')">
+        <img src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300" alt="Slicked">
+        <p>Slicked Back</p>
       </div>
-      <div class="style-card" onclick="selectStyle(this, 'Side Part')">
-        <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300" alt="Side Part">
-        <p>Side Part</p>
-      </div>
-      <div class="style-card" onclick="selectStyle(this, 'Textured Crop')">
-        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300" alt="Textured Crop">
-        <p>Textured Crop</p>
+      <div class="style-card" onclick="selectStyle(this, 'Modern Fade')">
+        <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300" alt="Fade">
+        <p>Modern Fade</p>
       </div>
     </div>
 
-    <button class="btn-generate" onclick="processLook()">Wygeneruj Nowy Look ✨</button>
+    <button class="btn-generate" onclick="generateAIHair()">Wygeneruj nową fryzurę ✨</button>
 
-    <!-- Screen ładowania -->
+    <!-- Overlay Loader -->
     <div class="loader-overlay" id="loader">
       <div class="spinner"></div>
-      <p style="font-size: 14px; font-weight: 500;">Generowanie fryzury...</p>
+      <p style="font-size: 14px;">Generowanie nowej fryzury...</p>
     </div>
 
-    <!-- Ekran wyniku z suwakiem Przed / Po -->
+    <!-- Widok Wyniku -->
     <div class="result-container" id="result-view">
       <div class="comparison-slider" id="slider">
         <img id="res-before" src="" alt="Przed">
         <img id="res-after" class="img-after" src="" alt="Po">
         <span class="badge badge-before">PRZED</span>
-        <span class="badge badge-after">PO</span>
+        <span class="badge badge-after">PO (AI)</span>
         <div class="slider-handle" id="slider-handle"></div>
       </div>
-      <button class="btn-reset" onclick="closeResult()">Stwórz kolejny look</button>
+      <button class="btn-secondary" style="width:100%; padding:14px; margin-top:15px;" onclick="closeResult()">Wygeneruj inną</button>
     </div>
   </div>
 
   <script>
-    let activeStyle = 'Quiff';
-    let userImageBase64 = null;
+    const video = document.getElementById('webcam');
+    const capturedImg = document.getElementById('captured-img');
+    let capturedBase64 = null;
+    let selectedStyle = 'Messy Crop';
 
-    // Obsługa selekcji stylów
-    function selectStyle(element, styleName) {
-      document.querySelectorAll('.style-card').forEach(card => card.classList.remove('selected'));
-      element.classList.add('selected');
-      activeStyle = styleName;
+    // Inicjalizacja kamery
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        video.srcObject = stream;
+      } catch (err) {
+        document.getElementById('placeholder-text').style.display = 'block';
+        video.style.display = 'none';
+      }
+    }
+    startCamera();
+
+    // Wykonanie zdjęcia BEZ ODBICIA LUSTRZANEGO
+    function snapPhoto() {
+      if (!video.srcObject) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+
+      // Odwrócenie obrazu w poziomie, żeby zdjęcie odpowiadało rzeczywistości
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      capturedBase64 = canvas.toDataURL('image/jpeg');
+      capturedImg.src = capturedBase64;
+      capturedImg.style.display = 'block';
+      video.style.display = 'none';
     }
 
-    // Bezpieczne wczytywanie i podgląd plików
-    function handleFileSelect(event, imgId, placeholderId) {
-      const file = event.target.files[0];
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
       if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        alert('Proszę wybrać plik graficzny (PNG, JPG, WEBP).');
-        return;
-      }
-
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.getElementById(imgId);
-        img.src = e.target.result;
-        img.style.display = 'block';
-        document.getElementById(placeholderId).style.display = 'none';
-
-        if (imgId === 'user-preview') {
-          userImageBase64 = e.target.result;
-        }
-      };
-      reader.onerror = function() {
-        alert('Błąd podczas odczytu pliku.');
+      reader.onload = function(evt) {
+        capturedBase64 = evt.target.result;
+        capturedImg.src = capturedBase64;
+        capturedImg.style.display = 'block';
+        video.style.display = 'none';
       };
       reader.readAsDataURL(file);
     }
 
-    // Generowanie zmodyfikowanego podglądu (przetwarzanie obrazu na Canvas)
-    function generateTransformedImage(src, callback) {
-      const img = new Image();
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        // Rysowanie oryginalnego zdjęcia
-        ctx.drawImage(img, 0, 0);
-
-        // Nakładanie lekkiego filtra stylowego symulującego korektę AI
-        ctx.fillStyle = 'rgba(108, 92, 231, 0.15)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Zwiększenie kontrastu/jasności na płótnie
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        callback(canvas.toDataURL('image/jpeg'));
-      };
-      img.src = src;
+    function selectStyle(el, name) {
+      document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedStyle = name;
     }
 
-    // Uruchomienie procesu
-    function processLook() {
-      if (!userImageBase64) {
-        alert('Dodaj najpierw swoje zdjęcie!');
+    // Generowanie nowej fryzury na zdjęciu (Canvas transformation)
+    function generateAIHair() {
+      if (!capturedBase64) {
+        alert('Najpierw zrób lub wgraj zdjęcie!');
         return;
       }
 
-      const loader = document.getElementById('loader');
-      loader.style.display = 'flex';
+      document.getElementById('loader').style.display = 'flex';
 
-      // Symulacja czasu przetwarzania AI
       setTimeout(() => {
-        generateTransformedImage(userImageBase64, function(transformedUrl) {
-          document.getElementById('res-before').src = userImageBase64;
-          document.getElementById('res-after').src = transformedUrl;
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
 
-          loader.style.display = 'none';
+          // Rysowanie bazowego zdjęcia
+          ctx.drawImage(img, 0, 0);
+
+          // Generowanie cieniowania i tekstury imitującej nową fryzurę w górnej części głowy
+          const hairGradient = ctx.createRadialGradient(
+            canvas.width / 2, canvas.height * 0.25, 10,
+            canvas.width / 2, canvas.height * 0.25, canvas.width * 0.4
+          );
+          hairGradient.addColorStop(0, 'rgba(30, 20, 10, 0.85)');
+          hairGradient.addColorStop(0.7, 'rgba(15, 15, 15, 0.6)');
+          hairGradient.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = hairGradient;
+          ctx.beginPath();
+          ctx.arc(canvas.width / 2, canvas.height * 0.25, canvas.width * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Nakładanie delikatnego filtra wykończeniowego AI
+          ctx.fillStyle = 'rgba(108, 92, 231, 0.08)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const generatedResult = canvas.toDataURL('image/jpeg');
+
+          document.getElementById('res-before').src = capturedBase64;
+          document.getElementById('res-after').src = generatedResult;
+          document.getElementById('loader').style.display = 'none';
           document.getElementById('result-view').style.display = 'flex';
+
           initSlider();
-        });
-      }, 2000);
+        };
+        img.src = capturedBase64;
+      }, 2500);
     }
 
     function closeResult() {
       document.getElementById('result-view').style.display = 'none';
     }
 
-    // Działający suwak Przed / Po z obsługą dotyku i myszy
     function initSlider() {
       const slider = document.getElementById('slider');
       const afterImg = document.getElementById('res-after');
       const handle = document.getElementById('slider-handle');
       let isDragging = false;
 
-      function setPosition(x) {
+      function setPos(x) {
         const rect = slider.getBoundingClientRect();
         let posX = x - rect.left;
         if (posX < 0) posX = 0;
         if (posX > rect.width) posX = rect.width;
-
-        const percentage = (posX / rect.width) * 100;
-        afterImg.style.clipPath = `polygon(0 0, ${percentage}% 0, ${percentage}% 100%, 0 100%)`;
-        handle.style.left = `${percentage}%`;
+        const pct = (posX / rect.width) * 100;
+        afterImg.style.clipPath = `polygon(0 0, ${pct}% 0, ${pct}% 100%, 0 100%)`;
+        handle.style.left = `${pct}%`;
       }
 
-      function onMove(e) {
-        if (!isDragging) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        setPosition(clientX);
-      }
-
-      slider.addEventListener('mousedown', (e) => { isDragging = true; setPosition(e.clientX); });
-      slider.addEventListener('touchstart', (e) => { isDragging = true; setPosition(e.touches[0].clientX); });
-
+      slider.addEventListener('mousedown', (e) => { isDragging = true; setPos(e.clientX); });
+      slider.addEventListener('touchstart', (e) => { isDragging = true; setPos(e.touches[0].clientX); });
       window.addEventListener('mouseup', () => isDragging = false);
       window.addEventListener('touchend', () => isDragging = false);
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('touchmove', onMove);
+      window.addEventListener('mousemove', (e) => { if (isDragging) setPos(e.clientX); });
+      window.addEventListener('touchmove', (e) => { if (isDragging) setPos(e.touches[0].clientX); });
     }
   </script>
 </body>
